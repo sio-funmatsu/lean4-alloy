@@ -52,11 +52,11 @@ partial def reprint (stx : Syntax) (startPos : String.Pos := 0) : Option ShimEle
       s := s0
     else
       for arg in args do
-        let pos := startPos + s.endPos
+        let pos := startPos + s.rawEndPos
         let (s', arg') ← reprint arg pos
         args' := args'.push arg'
         s := s ++ s'
-    return (s, Syntax.node (.synthetic startPos (startPos + s.endPos)) kind args')
+    return (s, Syntax.node (.synthetic startPos (startPos + s.rawEndPos)) kind args')
   | _ => failure
 
 /-- Computes the `bsize` of the reprinted `Syntax` in the shim source. -/
@@ -184,7 +184,7 @@ Reprint a command and add it to the shim.
 Fails if the command could not be reprinted.
 -/
 def pushCmd? (stx : Syntax) (self : Shim) : Option Shim := do
-  let (code, stx) ← reprint stx self.text.source.endPos
+  let (code, stx) ← reprint stx self.text.source.rawEndPos
   let code := self.text.source ++ code ++ "\n"
   return ⟨self.cmds.push stx, FileMap.ofString code⟩
 
@@ -196,7 +196,7 @@ def appendCmds? (cmds : Array Syntax) (self : Shim) : Except Syntax Shim := do
   let mut shimCmds := self.cmds
   let mut code := self.text.source
   for cmd in cmds do
-    let some (cmdCode, cmd) := reprint cmd code.endPos
+    let some (cmdCode, cmd) := reprint cmd code.rawEndPos
       | throw cmd
     code := code ++ cmdCode ++ "\n"
     shimCmds := shimCmds.push cmd

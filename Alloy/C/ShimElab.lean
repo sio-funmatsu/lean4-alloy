@@ -100,7 +100,7 @@ the syntax (via `Alloy.reprint`) and add it verbatim to the shim.
 diagnostics within the new code (if `Alloy.shimDiagnostics` is set to `true`).
 -/
 def elabShimCommand (cmd : Syntax) : CommandElabM Unit := do
-  let iniPos := getLocalShim (← getEnv) |>.text.source.endPos
+  let iniPos := getLocalShim (← getEnv) |>.text.source.rawEndPos
   elabEachCommand cmd fun cmd => do
     let elabFns := commandElabAttribute.getEntries (← getEnv) cmd.getKind
     unless (← elabCommandUsing cmd elabFns) do

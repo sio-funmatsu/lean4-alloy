@@ -153,11 +153,11 @@ def ClangdWorker.updateDocumentVersion
     let s ← ref.get
     let doc := s.data
     -- NOTE: Assumes shim changes across snapshots lengthen the shim
-    unless leanVer = 0 || doc.leanVer < leanVer || doc.shimEndPos < text.endPos do
+    unless leanVer = 0 || doc.leanVer < leanVer || doc.shimEndPos < text.rawEndPos do
       return none
     let doc := {
       leanVer := if leanVer > 0 then leanVer else doc.leanVer
-      shimEndPos := text.endPos
+      shimEndPos := text.rawEndPos
       version := doc.version + 1
       ready? := ← do
         match doc.ready? with

@@ -81,26 +81,26 @@ partial def elabShimSyntaxCore (ext : ModuleEnvExtension Shim) (stx : Syntax) : 
     let elabFns := shimElabAttribute.getEntries (← getEnv) kind
     if let some r ← elabSyntaxUsing? stx elabFns then
       return r
-    let startPos := ext.getState (← getEnv) |>.text.source.endPos
+    let startPos := ext.getState (← getEnv) |>.text.source.rawEndPos
     let args ←
       if kind = choiceKind then id do
         let some arg0 := args[0]?
           | throwError "empty choice node"
         let arg0 ← elabShimSyntaxCore ext arg0
         let shim := ext.getState (← getEnv) |>.text.source
-        let shim0 := shim.extract startPos shim.endPos
+        let shim0 := shim.extract startPos shim.rawEndPos
         let mut args' := #[arg0]
         for arg in args[1:] do
           let arg' ← withoutModifyingEnv <| elabShimSyntaxCore ext arg
           let shim := ext.getState (← getEnv) |>.text.source
-          let shim' := shim.extract startPos shim.endPos
+          let shim' := shim.extract startPos shim.rawEndPos
           args' := args'.push arg'
           if shim0 ≠ shim' then
             throwError "choice node did not produce the same shim on each elaboration"
         return args'
       else
         args.mapM fun arg => elabShimSyntaxCore ext arg
-    let endPos := ext.getState (← getEnv) |>.text.source.endPos
+    let endPos := ext.getState (← getEnv) |>.text.source.rawEndPos
     return Syntax.node (.synthetic startPos endPos) kind args
   | .missing =>
     throwError s!"shim syntax '{stx.getKind}' lacks a custom elaborator and could not be reprinted"
