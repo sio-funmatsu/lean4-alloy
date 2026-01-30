@@ -77,15 +77,21 @@ def chainStatelessLspRequestHandler
       let t ← RequestM.mapTaskCheap t fun
         | .ok r => do
           complete.set r.isComplete
-          match FromJson.fromJson? r.response with
-          | .ok b => return b
-          | .error e => throw <| .internalError s!"\
-            Failed to parse original LSP response for `{method}` when chaining: {e}"
+          match r.response? with
+          | some resp =>
+            match FromJson.fromJson? resp with
+            | .ok b => return b
+            | .error e => throw <| .internalError s!"\
+              Failed to parse original LSP response for `{method}` when chaining: {e}"
+          | none => throw <| .internalError s!"\
+            Missing response for `{method}` when chaining"
         | .error e => throw e
       let params ← liftExcept <| parseRequestParams α j
       let t ← handler params t
       RequestM.mapTaskCheap t fun
-        | .ok b => return {response := ToJson.toJson b, isComplete := ← complete.get}
+        | .ok b =>
+          let json := ToJson.toJson b
+          return {response? := some json, serialized := json.compress, isComplete := ← complete.get}
         | .error e => throw e
     statefulRequestHandlers.modify fun rhs =>
       rhs.insert method {oldHandler with handle}

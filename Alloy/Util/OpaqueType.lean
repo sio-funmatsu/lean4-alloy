@@ -52,7 +52,7 @@ elab_rules : command
   let modifiers ← elabModifiers ⟨mods⟩
   let {docString?, visibility, isProtected, attrs, ..} := modifiers
   let safety := if modifiers.isUnsafe then DefinitionSafety.unsafe else .safe
-  let {declName, ..} ← expandDeclId (← getCurrNamespace) (← getLevelNames) declId {docString?, visibility, isProtected}
+  let {declName, ..} ← liftTermElabM <| expandDeclId (← getCurrNamespace) (← getLevelNames) declId {docString?, visibility, isProtected}
   let sc ← Command.getScope
   runTermElabM fun vars => do
   let stx ← getRef
@@ -66,7 +66,7 @@ elab_rules : command
     ref := stx, headerRef := stx, kind := .opaque,
     modifiers := {isUnsafe := safety matches .unsafe},
     declId := declId.raw.setArg 0 ntId, binders := mkNullNode bs,
-    type? := nt, value := ntDefn
+    type? := nt, value := ntDefn, docString? := none
   }] {}
   let .opaqueInfo {type, levelParams, ..} ← getConstInfo ntName
     | throwError "expected opaque info for 'nonemptyType'"

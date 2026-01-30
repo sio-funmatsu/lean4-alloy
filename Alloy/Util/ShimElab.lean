@@ -34,7 +34,7 @@ scoped elab_rules : command
     let attr ← `(Term.attrInstance| $attrKind:attrKind $attrName:ident $k:ident)
     let attrs := expandAttrs attrs? |>.push attr
     let stx ← `($[$doc?:docComment]? @[$attrs,*]
-      aux_def elabRules k : Alloy.ShimElab :=
+      public aux_def elabRules k : Alloy.ShimElab :=
       fun $alts:matchAlt* | _ => no_error_if_unused% throwUnsupportedSyntax)
     withMacroExpansion (← getRef) stx <| elabCommand stx
   else

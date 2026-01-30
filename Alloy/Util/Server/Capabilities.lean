@@ -52,7 +52,7 @@ inductive CompletionItemTag where
 deriving Inhabited, DecidableEq, Repr
 
 instance : ToJson CompletionItemTag where
-  toJson a := toJson <| a.toCtorIdx + 1
+  toJson a := toJson <| a.ctorIdx + 1
 
 instance : FromJson CompletionItemTag where
   fromJson? v := return .ofNat ((← fromJson? v)-1)
@@ -62,7 +62,7 @@ inductive InsertTextMode where
 deriving Inhabited, DecidableEq, Repr
 
 instance : ToJson InsertTextMode where
-  toJson a := toJson <| a.toCtorIdx + 1
+  toJson a := toJson <| a.ctorIdx + 1
 
 instance : FromJson InsertTextMode where
   fromJson? v := return .ofNat ((← fromJson? v)-1)
@@ -72,7 +72,7 @@ inductive PrepareSupportDefaultBehavior  where
 deriving Inhabited, DecidableEq, Repr
 
 instance : ToJson PrepareSupportDefaultBehavior where
-  toJson a := toJson <| a.toCtorIdx + 1
+  toJson a := toJson <| a.ctorIdx + 1
 
 instance : FromJson PrepareSupportDefaultBehavior where
   fromJson? v := return .ofNat ((← fromJson? v)-1)
@@ -82,7 +82,7 @@ inductive DiagnosticTag  where
 deriving Inhabited, DecidableEq, Repr
 
 instance : ToJson DiagnosticTag where
-  toJson a := toJson <| a.toCtorIdx + 1
+  toJson a := toJson <| a.ctorIdx + 1
 
 instance : FromJson DiagnosticTag where
   fromJson? v := return .ofNat ((← fromJson? v)-1)

@@ -60,7 +60,7 @@ inductive InsertTextFormat where
 deriving DecidableEq
 
 instance : ToJson InsertTextFormat where
- toJson a  := toJson <| a.toCtorIdx + 1
+ toJson a  := toJson <| a.ctorIdx + 1
 
 instance : FromJson InsertTextFormat where
  fromJson? v :=  return .ofNat ((← fromJson? v)-1)

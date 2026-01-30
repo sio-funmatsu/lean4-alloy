@@ -85,40 +85,40 @@ def withAntiquot.parenthesizer := Parenthesizer.withAntiquot.parenthesizer
 
 /-- Matches to the next unescaped linebreak. -/
 partial def lineFn : ParserFn := fun c s =>
-  parseNormal c.input s
+  parseNormal c s
 where
-  parseNormal input s :=
-    if h : input.atEnd s.pos then
+  parseNormal c s :=
+    if h : c.atEnd s.pos then
       s
     else
-      let curr := input.get' s.pos h
-      let s := s.next' input s.pos h
+      let curr := c.get' s.pos h
+      let s := s.next' c s.pos h
       if curr = '\\' then
-        parseEscape input s
+        parseEscape c s
       else if curr = '\n' then
         s
       else
-        parseNormal input s
-  parseEscape input s :=
-    if h : input.atEnd s.pos then
+        parseNormal c s
+  parseEscape c s :=
+    if h : c.atEnd s.pos then
       s
     else
-      let curr := input.get' s.pos h
-      let s := s.next' input s.pos h
+      let curr := c.get' s.pos h
+      let s := s.next' c s.pos h
       if curr = '\\' then
-        parseEscape input s
+        parseEscape c s
       else if curr = '\r' then
-        if h : input.atEnd s.pos then
+        if h : c.atEnd s.pos then
           s
         else
-          let curr := input.get' s.pos h
-          let s := s.next' input s.pos h
+          let curr := c.get' s.pos h
+          let s := s.next' c s.pos h
           if curr = '\\' then
-            parseEscape input s
+            parseEscape c s
           else
-            parseNormal input s
+            parseNormal c s
       else
-        parseNormal input s
+        parseNormal c s
 
 @[inherit_doc lineFn]
 def lineNoAntiquot :=

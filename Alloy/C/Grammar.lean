@@ -130,26 +130,25 @@ declare_syntax_cat cCmd (behavior := both)
 variable (pushMissingOnError : Bool) in
 /-- Adaption of `Lean.Parser.finishCommentBlock`. -/
 partial def finishCommentBlock (nesting : Nat) : ParserFn := fun c s =>
-  let input := c.input
   let i     := s.pos
-  if h : input.atEnd i then eoi s
+  if h : c.atEnd i then eoi s
   else
-    let curr := input.get' i h
-    let i    := input.next' i h
+    let curr := c.get' i h
+    let i    := c.next' i h
     if curr == '*' then
-      if h : input.atEnd i then eoi s
+      if h : c.atEnd i then eoi s
       else
-        let curr := input.get' i h
+        let curr := c.get' i h
         if curr == '/' then -- "-/" end of comment
-          if nesting == 1 then s.next' input i h
-          else finishCommentBlock (nesting-1) c (s.next' input i h)
+          if nesting == 1 then s.next' c i h
+          else finishCommentBlock (nesting-1) c (s.next' c i h)
         else
           finishCommentBlock nesting c (s.setPos i)
     else if curr == '/' then
-      if h : input.atEnd i then eoi s
+      if h : c.atEnd i then eoi s
       else
-        let curr := input.get' i h
-        if curr == '-' then finishCommentBlock (nesting+1) c (s.next' input i h)
+        let curr := c.get' i h
+        if curr == '-' then finishCommentBlock (nesting+1) c (s.next' c i h)
         else finishCommentBlock nesting c (s.setPos i)
     else finishCommentBlock nesting c (s.setPos i)
 where

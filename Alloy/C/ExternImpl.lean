@@ -65,7 +65,8 @@ def setExtern (name : Name) (sym : String) : CoreM Unit := do
   lacking an implementation (i.e., `noncomputable` definitions)
   -/
   let externData : ExternAttrData := {entries := [.standard `all sym]}
-  let env := externAttr.ext.modifyState (← getEnv) fun s => s.insert name externData
+  let env := externAttr.ext.modifyState (← getEnv) fun (names, map) =>
+    (name :: names, map.insert name externData)
   setEnv env
   addExtern name externData
 
