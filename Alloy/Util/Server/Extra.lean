@@ -16,7 +16,7 @@ namespace Alloy
 @[inline] def utf8RangeToLspRange (text : FileMap) (range : String.Range) : Lsp.Range :=
   ⟨text.utf8PosToLspPos range.start, text.utf8PosToLspPos range.stop⟩
 
-def Shim.leanPosToLsp? (self : Shim) (leanPos : String.Pos) (includeStop := false) : Option Lsp.Position := do
+def Shim.leanPosToLsp? (self : Shim) (leanPos : String.Pos.Raw) (includeStop := false) : Option Lsp.Position := do
   self.text.utf8PosToLspPos (← self.leanPosToShim? leanPos includeStop)
 
 def Shim.utf8RangeToLean? (self : Shim) (shimRange : String.Range) : Option String.Range := do

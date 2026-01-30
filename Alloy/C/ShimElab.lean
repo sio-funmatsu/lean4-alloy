@@ -45,7 +45,7 @@ def addCommandToShim [Monad m] [MonadEnv m] [MonadError m] (cmd : Syntax) : m Un
     throwError s!"command '{cmd.getKind}' could not reprinted and add raw to the C shim"
 
 /-- Extract shim diagnostics from `clangd` and log them as Lean messages. -/
-def logDiagnosticsAfter (iniPos : String.Pos) : CommandElabM Unit := do
+def logDiagnosticsAfter (iniPos : String.Pos.Raw) : CommandElabM Unit := do
   let opts ← getOptions
   unless shimDiagnostics.get opts do
     return

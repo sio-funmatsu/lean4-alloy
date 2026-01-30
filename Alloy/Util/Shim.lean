@@ -33,7 +33,7 @@ def reprintLeaf (val : String) : SourceInfo → String
 Like `Lean.Syntax.reprint`, but transforms comments into whitespace and
 tags nodes with `SourceInfo` noting their position in the reprinted code.
 -/
-partial def reprint (stx : Syntax) (startPos : String.Pos := 0) : Option ShimElem := do
+partial def reprint (stx : Syntax) (startPos : String.Pos.Raw := 0) : Option ShimElem := do
   match stx with
   | .atom info val =>
     return (reprintLeaf val info, stx)
@@ -52,11 +52,11 @@ partial def reprint (stx : Syntax) (startPos : String.Pos := 0) : Option ShimEle
       s := s0
     else
       for arg in args do
-        let pos := startPos + s.endPos
+        let pos : String.Pos.Raw := ⟨startPos.byteIdx + s.endPos.byteIdx⟩
         let (s', arg') ← reprint arg pos
         args' := args'.push arg'
         s := s ++ s'
-    return (s, Syntax.node (.synthetic startPos (startPos + s.endPos)) kind args')
+    return (s, Syntax.node (.synthetic startPos ⟨startPos.byteIdx + s.endPos.byteIdx⟩) kind args')
   | _ => failure
 
 /-- Computes the `bsize` of the reprinted `Syntax` in the shim source. -/
@@ -80,7 +80,7 @@ between Lean source information of elements within the tree. Thus, it is very
 linear in its performance.
 -/
 partial def ShimSyntax.leanPosToShim? (stx : ShimSyntax)
-(leanPos : String.Pos) (includeStop := false) : Option String.Pos := do
+(leanPos : String.Pos.Raw) (includeStop := false) : Option String.Pos.Raw := do
   go stx 0 0
 where
   go stx shimHeadPos shimTailPos := do
@@ -88,7 +88,7 @@ where
       let .synthetic shimHeadPos _ := info | failure
       let mut headPos := shimHeadPos
       for arg in args do
-        let tailPos := headPos + ⟨ShimSyntax.bsize arg⟩
+        let tailPos : String.Pos.Raw := ⟨headPos.byteIdx + ShimSyntax.bsize arg⟩
         if let some pos := go arg headPos tailPos then
           return pos
         headPos := tailPos
@@ -96,9 +96,9 @@ where
     else
       let leanRange ← stx.getRange?
       if leanRange.contains leanPos includeStop then
-        let leanOff := leanPos - leanRange.start
-        let shimLen := shimTailPos - shimHeadPos
-        let shimPos := shimHeadPos + ⟨min leanOff.byteIdx shimLen.byteIdx⟩
+        let leanOff := leanPos.byteIdx - leanRange.start.byteIdx
+        let shimLen := shimTailPos.byteIdx - shimHeadPos.byteIdx
+        let shimPos : String.Pos.Raw := ⟨shimHeadPos.byteIdx + min leanOff shimLen⟩
         return shimPos
       failure
 
@@ -113,7 +113,7 @@ syntax has not been re-ordered since it was tagged with source information
 (e.g., via `reprint`).
 -/
 partial def ShimSyntax.shimPosToLeanStx? (stx : ShimSyntax)
-(shimPos : String.Pos) (includeStop := false) : Option Syntax :=
+(shimPos : String.Pos.Raw) (includeStop := false) : Option Syntax :=
   go stx 0 0
 where
   go stx shimHead shimTail := do
@@ -123,7 +123,7 @@ where
         guard <| String.Range.contains ⟨shimHead, shimTail⟩ shimPos includeStop
       let mut headPos := shimHead
       for arg in args do
-        let tailPos := headPos + ⟨ShimSyntax.bsize arg⟩
+        let tailPos : String.Pos.Raw := ⟨headPos.byteIdx + ShimSyntax.bsize arg⟩
         if let some stx := go arg headPos tailPos then
           return stx
         headPos := tailPos
@@ -213,12 +213,12 @@ def ofCmds (cmds : Array Syntax) : Shim :=
 Find the position within the shim
 corresponding to the `leanPos` in the Lean source.
 -/
-def leanPosToShim? (self : Shim) (leanPos : String.Pos) (includeStop := false) : Option String.Pos := do
+def leanPosToShim? (self : Shim) (leanPos : String.Pos.Raw) (includeStop := false) : Option String.Pos.Raw := do
   self.cmds.findSome? (·.leanPosToShim? leanPos includeStop)
 
 /--
 Find the `Syntax` leaf within the shim's Lean source
 corresponding to the `shimPos` in the shim.
 -/
-def shimPosToLeanStx? (self : Shim) (shimPos : String.Pos) (includeStop := false) : Option Syntax :=
+def shimPosToLeanStx? (self : Shim) (shimPos : String.Pos.Raw) (includeStop := false) : Option Syntax :=
   self.cmds.findSome? (·.shimPosToLeanStx? shimPos includeStop)

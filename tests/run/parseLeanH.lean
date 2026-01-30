@@ -4,26 +4,26 @@ import Lean.Elab.Command
 open Lean Parser Elab Command
 
 partial def Lean.Data.Trie.erase {α} (t : Trie α) (s : String) : Trie α :=
-  let rec loop : Nat → Trie α → Trie α
+  let rec loop : String.Pos.Raw → Trie α → Trie α
     | i, leaf v =>
-      if i < s.utf8ByteSize then leaf v else leaf none
+      if i < s.endPos then leaf v else leaf none
     | i, node1 v c' t' =>
-      if h : i < s.utf8ByteSize then
-        if c' = s.getUtf8Byte i h then
-          loop (i+1) t'
+      if h : i < s.endPos then
+        if c' = s.getUTF8Byte i h then
+          loop ⟨i.byteIdx+1⟩ t'
         else
           node1 v c' t'
       else
         node1 none c' t'
     | i, node v cs ts =>
-      if h : i < s.utf8ByteSize then
-        let c := s.getUtf8Byte i h
+      if h : i < s.endPos then
+        let c := s.getUTF8Byte i h
         match cs.findIdx? (· == c) with
         | none => node v cs ts
-        | some idx => node v cs <| ts.setIfInBounds idx <| loop (i+1) ts[idx]!
+        | some idx => node v cs <| ts.setIfInBounds idx <| loop ⟨i.byteIdx+1⟩ ts[idx]!
       else
         node none cs ts
-  loop 0 t
+  loop ⟨0⟩ t
 
 syntax "LEAN_CASSERT" "(" cExpr ")" ";" : cCmd
 syntax "extern" str "{" : cCmd
@@ -44,13 +44,13 @@ partial def test : CommandElabM PUnit := do
     env, options := scope.opts,
     currNamespace := scope.currNamespace, openDecls := scope.openDecls
   }
-  go p.fn ictx pmctx (mkParserState ictx.input)
+  go p.fn ictx pmctx (mkParserState ictx.inputString)
 where
   go p ictx pmctx s := do
     let s := p.run ictx pmctx (getTokenTable pmctx.env) s
     if s.hasError then
       logError <| s.toErrorMsg ictx
-    else if ictx.input.atEnd s.pos then
+    else if ictx.atEnd s.pos then
       pure ()
     else
       go p ictx pmctx s

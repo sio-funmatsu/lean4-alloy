@@ -79,7 +79,7 @@ structure ServerConfig where
 attribute [instance] Sum.inhabitedLeft in
 structure ClangdDocState where
   leanVer : Nat := 0
-  shimEndPos : String.Pos := 0
+  shimEndPos : String.Pos.Raw := 0
   version : Nat := 0
   ready? : Option (IO.Promise Unit) := none
   diagnostics : Sum (Array Diagnostic) (IO.Promise (Array Diagnostic)) := .inl #[]

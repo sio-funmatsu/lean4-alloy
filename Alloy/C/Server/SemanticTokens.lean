@@ -65,7 +65,7 @@ def decodeLeanTokens (data : Array Nat) : Array SemanticTokenEntry := Id.run do
 
 def decodeShimTokens
 (data : Array Nat) (shim : Shim) (text : FileMap)
-(beginPos endPos : String.Pos) (types modifiers : Array String)
+(beginPos endPos : String.Pos.Raw) (types modifiers : Array String)
 : Array SemanticTokenEntry := Id.run do
   let mut line := 0
   let mut char := 0
@@ -92,13 +92,13 @@ def decodeShimTokens
       | continue -- Ditto
     let some type := SemanticTokenType.names.idxOf? type
       | continue -- Skip semantic token types not supported by the Lean server
-    let leanLen := text.source.extract pos tailPos |>.length
+    let leanLen := String.Pos.Raw.extract text.source pos tailPos |>.length
     let leanLen := shim.text.source.codepointPosToUtf16PosFrom leanLen pos
     entries := entries.push ⟨lspPos.line, lspPos.character, leanLen, type, modMask⟩
   return entries
 
 def handleSemanticTokens
-(beginPos endPos : String.Pos) (prev : RequestTask SemanticTokens)
+(beginPos endPos : String.Pos.Raw) (prev : RequestTask SemanticTokens)
 : RequestM (RequestTask SemanticTokens) := do
   let doc ← readDoc
   let afterEnd snap := snap.isAtEnd || snap.endPos ≥ endPos

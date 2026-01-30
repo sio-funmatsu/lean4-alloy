@@ -88,12 +88,12 @@ partial def elabShimSyntaxCore (ext : ModuleEnvExtension Shim) (stx : Syntax) : 
           | throwError "empty choice node"
         let arg0 ← elabShimSyntaxCore ext arg0
         let shim := ext.getState (← getEnv) |>.text.source
-        let shim0 := shim.extract startPos shim.endPos
+        let shim0 := String.Pos.Raw.extract shim startPos shim.endPos
         let mut args' := #[arg0]
         for arg in args[1:] do
           let arg' ← withoutModifyingEnv <| elabShimSyntaxCore ext arg
           let shim := ext.getState (← getEnv) |>.text.source
-          let shim' := shim.extract startPos shim.endPos
+          let shim' := String.Pos.Raw.extract shim startPos shim.endPos
           args' := args'.push arg'
           if shim0 ≠ shim' then
             throwError "choice node did not produce the same shim on each elaboration"
