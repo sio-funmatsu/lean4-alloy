@@ -32,11 +32,11 @@ def mkParams (fnType : Lean.Expr)
         if bv.id.raw.getId = name then
           bv? := some bv
           viewIdx := i + 1
-          let kind := Term.kindOfBinderName name
+          let kind : LocalDeclKind := if name.isImplementationDetail then .implDetail else .default
           Meta.withLocalDecl name info ty (kind := kind) fun fvar => do
             Term.addLocalVarInfo bv.id fvar
           break
-    if p.ty.isIrrelevant then
+    if p.ty.isErased then
       continue -- Lean omits irrelevant parameters for extern constants
     let (id, tyRef) : Ident × Syntax :=
       if let some bv := bv? then
@@ -53,7 +53,7 @@ def mkParams (fnType : Lean.Expr)
     throwErrorAt (bvs[viewIdx]'h).id "unknown parameter"
   `(params| $[$decls:paramDecl],*)
 
-def setExtern [Monad m] [MonadEnv m] [MonadError m] (name : Name) (sym : String) : m Unit := do
+def setExtern (name : Name) (sym : String) : CoreM Unit := do
   let env ← getEnv
   if env.getModuleIdxFor? name |>.isSome then
     throwError "declaration is in an imported module"
@@ -64,11 +64,10 @@ def setExtern [Monad m] [MonadEnv m] [MonadError m] (name : Name) (sym : String)
   and projections, so we manually extend this to normal definitions
   lacking an implementation (i.e., `noncomputable` definitions)
   -/
-  let env := externAttr.ext.modifyState env fun s => s.insert name
-    {arity? := none, entries := [.standard `all sym]}
-  match addExtern env name with
-  | .ok env => setEnv env
-  | .error e => throwError s!"(compiler) {e}"
+  let externData : ExternAttrData := {entries := [.standard `all sym]}
+  let env := externAttr.ext.modifyState (← getEnv) fun s => s.insert name externData
+  setEnv env
+  addExtern name externData
 
 def elabExternImpl (exTk : Syntax) (sym? : Option StrLit) (id : Ident) (bvs : Array BinderSyntaxView)
 (type : Syntax) (body : CompStmt) : CommandElabM Unit := do
@@ -80,7 +79,7 @@ def elabExternImpl (exTk : Syntax) (sym? : Option StrLit) (id : Ident) (bvs : Ar
     | none =>
       let extSym := "_alloy_c_" ++ name.mangle
       (mkIdentFrom id (.mkSimple extSym), extSym)
-  withRef id <| setExtern name extSym
+  withRef id <| liftCoreM <| setExtern name extSym
   let env ← getEnv
   let some info := env.find? name
     | throwErrorAt id "failed to find Lean definition"

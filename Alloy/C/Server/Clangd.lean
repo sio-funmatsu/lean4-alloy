@@ -17,16 +17,16 @@ structure CompilationDatabaseEntry where
   deriving ToJson, FromJson
 
 abbrev CompilationDatabase :=
-  RBMap FilePath CompilationDatabaseEntry (compare ·.toString ·.toString)
+  Std.TreeMap FilePath CompilationDatabaseEntry (compareOn (·.toString))
 
 instance : ToJson CompilationDatabase where
-  toJson v := Json.obj <| v.fold (init := .leaf) fun a k v =>
-    a.insert compare k.toString (toJson v)
+  toJson v := Json.obj <| v.foldl (init := .empty) fun a k v =>
+    a.insert k.toString (toJson v)
 
 instance : FromJson CompilationDatabase where
   fromJson? v := do
     let o ← v.getObj?
-    o.foldM (init := {}) fun a k v => do
+    o.foldlM (init := {}) fun a k v => do
       return a.insert (FilePath.mk k) (← fromJson? v)
 
 structure InitializationOptions where

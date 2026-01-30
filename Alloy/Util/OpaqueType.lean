@@ -23,20 +23,6 @@ than it would be if `Subtype.property` was used directly.
 abbrev NonemptyType.nonempty (type : NonemptyType.{u}) : Nonempty type.val :=
   type.property
 
-/--
-Convert a visibility modifier syntax into a `Visibility`.
-
-Code is taken from `elabModifiers` in `Lean.Elab.DeclModifiers`.
--/
-def expandOptVisibility : Option (TSyntax [``Command.private,``Command.protected,``Command.public]) → MacroM Visibility
-| none => pure Visibility.regular
-| some v =>
-  let kind := v.raw.getKind
-  if kind == ``Command.private then pure Visibility.private
-  else if kind == ``Command.protected then pure Visibility.protected
-  else if kind == ``Command.public then pure Visibility.regular
-  else Macro.throwErrorAt v "unexpected visibility modifier"
-
 /-- A type specifier that is restricted to types of the `Type [<lv>]` form. -/
 syntax typeLvSpec := " : " "Type " (level)?
 
@@ -59,15 +45,14 @@ instance T.nonempty <binders>.. : Nonempty (T ..) :=
 ```
 -/
 syntax (name := opaqueType)
-(docComment)? (Term.attributes)? (visibility)? «unsafe»?
-"opaque_type " declId binders (typeLvSpec)? : command
+declModifiers "opaque_type " declId binders (typeLvSpec)? : command
 
 elab_rules : command
-| `(opaqueType| $(docString?)? $(attrs?)? $(vis?)? $[unsafe%$uTk?]? opaque_type $declId $bs* $[: Type $(lv??)?]?) => do
-  let attrs ← if let some attrs := attrs? then elabDeclAttrs attrs else pure #[]
-  let visibility ← liftMacroM <| expandOptVisibility vis?
-  let safety := if uTk?.isSome then DefinitionSafety.unsafe else .safe
-  let {declName, ..} ← expandDeclId (← getCurrNamespace) (← getLevelNames) declId {docString?, visibility}
+| `(opaqueType| $mods:declModifiers opaque_type $declId $bs* $[: Type $(lv??)?]?) => do
+  let modifiers ← elabModifiers ⟨mods⟩
+  let {docString?, visibility, isProtected, attrs, ..} := modifiers
+  let safety := if modifiers.isUnsafe then DefinitionSafety.unsafe else .safe
+  let {declName, ..} ← expandDeclId (← getCurrNamespace) (← getLevelNames) declId {docString?, visibility, isProtected}
   let sc ← Command.getScope
   runTermElabM fun vars => do
   let stx ← getRef

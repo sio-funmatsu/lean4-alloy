@@ -26,7 +26,7 @@ abbrev pipedStdioConfig : IO.Process.StdioConfig :=
 /-- State for an `LsWorker`. -/
 structure LsState (α : Type u) where
   nextID : Nat := 0
-  responseMap : RBMap RequestID (Promise (Except (ResponseError Json) Json)) compare := {}
+  responseMap : Std.TreeMap RequestID (Promise (Except (ResponseError Json) Json)) compare := {}
   error? : Option IO.Error := none
   data : α
 
@@ -45,19 +45,19 @@ abbrev NotificationHandler :=
 
 /-- A method-handler map. -/
 abbrev NotificationHandlerMap :=
-  RBMap String NotificationHandler compare
+  Std.TreeMap String NotificationHandler compare
 
 namespace NotificationHandlerMap
 
 @[inline] def empty : NotificationHandlerMap :=
-  RBMap.empty
+  Std.TreeMap.empty
 
-@[inline] def toRBMap (self : NotificationHandlerMap) : RBMap String NotificationHandler compare :=
+@[inline] def toTreeMap (self : NotificationHandlerMap) : Std.TreeMap String NotificationHandler compare :=
   self
 
 @[inline] def insert (self : NotificationHandlerMap)
   [FromJson α] (method : String) [LsClientNote method α] (handle : α → BaseIO Unit) :=
-    self.toRBMap.insert method <| mkClientNotificationHandler method handle
+    self.toTreeMap.insert method <| mkClientNotificationHandler method handle
 
 end NotificationHandlerMap
 
@@ -143,13 +143,13 @@ partial def readLspMessages (stream : IO.FS.Stream) (state : Std.Mutex (LsState 
     | .request _id _method _params? =>
       pure ()
     | .notification method params? =>
-      if let some handle ← notificationHandlers.atomically (·.get <&> (·.find? method)) then
+      if let some handle ← notificationHandlers.atomically (·.get <&> (·.get? method)) then
         handle params?
     | .response id result =>
-      if let some p ← state.atomically (·.get <&> (·.responseMap.find? id)) then
+      if let some p ← state.atomically (·.get <&> (·.responseMap.get? id)) then
         p.resolve <| .ok result
     | .responseError id code message data? =>
-      if let some p ← state.atomically (·.get <&> (·.responseMap.find? id)) then
+      if let some p ← state.atomically (·.get <&> (·.responseMap.get? id)) then
         p.resolve <| .error {id, code, message, data?}
     readLspMessages stream state notificationHandlers
   | .error e =>

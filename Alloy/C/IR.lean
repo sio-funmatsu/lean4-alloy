@@ -24,7 +24,8 @@ def expandIrResultTypeToC (borrow : Bool) : IRType → MacroM TypeSpec
 | .usize      => `(cTypeSpec|size_t)
 | .object     => expandIrObjResultTypeToC borrow
 | .tobject    => expandIrObjResultTypeToC borrow
-| .irrelevant => expandIrObjResultTypeToC borrow
+| .erased => expandIrObjResultTypeToC borrow
+| .tagged     => expandIrObjResultTypeToC borrow
 | .struct ..  => Macro.throwError "unexpected IR type `struct`"
 | .union ..   => Macro.throwError "unexpected IR type `union`"
 
@@ -42,6 +43,7 @@ def expandIrParamTypeToC (borrow : Bool) : IRType → MacroM TypeSpec
 | .usize      => `(cTypeSpec|size_t)
 | .object     => expandIrObjOParamTypeToC borrow
 | .tobject    => expandIrObjOParamTypeToC borrow
-| .irrelevant => expandIrObjOParamTypeToC borrow
+| .erased => expandIrObjOParamTypeToC borrow
+| .tagged     => expandIrObjOParamTypeToC borrow
 | .struct ..  => Macro.throwError "unexpected IR type `struct`"
 | .union ..   => Macro.throwError "unexpected IR type `union`"
