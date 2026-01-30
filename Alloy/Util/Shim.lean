@@ -52,11 +52,11 @@ partial def reprint (stx : Syntax) (startPos : String.Pos.Raw := 0) : Option Shi
       s := s0
     else
       for arg in args do
-        let pos : String.Pos.Raw := ⟨startPos.byteIdx + s.endPos.byteIdx⟩
+        let pos : String.Pos.Raw := ⟨startPos.byteIdx + s.rawEndPos.byteIdx⟩
         let (s', arg') ← reprint arg pos
         args' := args'.push arg'
         s := s ++ s'
-    return (s, Syntax.node (.synthetic startPos ⟨startPos.byteIdx + s.endPos.byteIdx⟩) kind args')
+    return (s, Syntax.node (.synthetic startPos ⟨startPos.byteIdx + s.rawEndPos.byteIdx⟩) kind args')
   | _ => failure
 
 /-- Computes the `bsize` of the reprinted `Syntax` in the shim source. -/
@@ -66,9 +66,9 @@ def ShimSyntax.bsize : ShimSyntax → Nat
 | .node (.synthetic head tail) _ _ => tail.byteIdx - head.byteIdx
 | _ => 0
 where
-  sizeLeaf (val : Substring) : SourceInfo → Nat
-  | .original lead _ trail _ => lead.bsize + val.bsize + trail.bsize
-  | _  => val.bsize + 1
+  sizeLeaf (val : Substring.Raw) : SourceInfo → Nat
+  | .original lead _ trail _ => Substring.Raw.bsize lead + Substring.Raw.bsize val + Substring.Raw.bsize trail
+  | _  => Substring.Raw.bsize val + 1
 
 /--
 Find the position within the `ShimSyntax`
@@ -120,7 +120,7 @@ where
     if let .node info _ args := stx then
       let .synthetic shimHead shimTail := info | failure
       if shimHead ≠ shimTail then -- e.g., still enter null nodes
-        guard <| String.Range.contains ⟨shimHead, shimTail⟩ shimPos includeStop
+        guard <| Syntax.Range.contains ⟨shimHead, shimTail⟩ shimPos includeStop
       let mut headPos := shimHead
       for arg in args do
         let tailPos : String.Pos.Raw := ⟨headPos.byteIdx + ShimSyntax.bsize arg⟩
@@ -128,7 +128,7 @@ where
           return stx
         headPos := tailPos
     else
-      if String.Range.contains ⟨shimHead, shimTail⟩ shimPos includeStop then
+      if Syntax.Range.contains ⟨shimHead, shimTail⟩ shimPos includeStop then
         return stx
     failure
 
@@ -184,7 +184,7 @@ Reprint a command and add it to the shim.
 Fails if the command could not be reprinted.
 -/
 def pushCmd? (stx : Syntax) (self : Shim) : Option Shim := do
-  let (code, stx) ← reprint stx self.text.source.endPos
+  let (code, stx) ← reprint stx self.text.source.rawEndPos
   let code := self.text.source ++ code ++ "\n"
   return ⟨self.cmds.push stx, FileMap.ofString code⟩
 
@@ -196,7 +196,7 @@ def appendCmds? (cmds : Array Syntax) (self : Shim) : Except Syntax Shim := do
   let mut shimCmds := self.cmds
   let mut code := self.text.source
   for cmd in cmds do
-    let some (cmdCode, cmd) := reprint cmd code.endPos
+    let some (cmdCode, cmd) := reprint cmd code.rawEndPos
       | throw cmd
     code := code ++ cmdCode ++ "\n"
     shimCmds := shimCmds.push cmd

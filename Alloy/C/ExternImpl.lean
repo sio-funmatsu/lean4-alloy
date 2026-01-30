@@ -36,8 +36,8 @@ def mkParams (fnType : Lean.Expr)
           Meta.withLocalDecl name info ty (kind := kind) fun fvar => do
             Term.addLocalVarInfo bv.id fvar
           break
-    if p.ty.isErased then
-      continue -- Lean omits irrelevant parameters for extern constants
+    if p.ty.isErased || p.ty.isVoid then
+      continue -- Lean omits irrelevant/void parameters for extern constants
     let (id, tyRef) : Ident × Syntax :=
       if let some bv := bv? then
         match bv.id with

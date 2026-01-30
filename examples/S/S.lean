@@ -57,7 +57,7 @@ def appendToGlobalS (string : String) : BaseIO PUnit :=
   } else {
     g_s.m_s = lean_string_append(g_s.m_s, string)
   }
-  return lean_io_result_mk_ok(lean_box(0))
+  return lean_box(0)
 
 alloy c extern "lean_S_global_string"
 def getGlobalString : BaseIO String :=
@@ -65,7 +65,7 @@ def getGlobalString : BaseIO String :=
     g_s.m_s = lean_mk_string("")
   }
   lean_inc(g_s.m_s)
-  return lean_io_result_mk_ok(g_s.m_s)
+  return g_s.m_s
 
 alloy c extern "lean_S_update_global"
 def updateGlobalS (s : @& S) : BaseIO Unit :=
@@ -76,4 +76,4 @@ def updateGlobalS (s : @& S) : BaseIO Unit :=
   g_s.m_x = of_lean<S>(s)->m_x
   g_s.m_y = of_lean<S>(s)->m_y
   g_s.m_s = of_lean<S>(s)->m_s
-  return lean_io_result_mk_ok(lean_box(0))
+  return lean_box(0)

@@ -136,7 +136,7 @@ def handleSemanticTokens
 def handleSemanticTokensFull
 (_ : SemanticTokensParams) (prev : RequestTask SemanticTokens)
 : RequestM (RequestTask SemanticTokens) := do
-  handleSemanticTokens 0 (← readDoc).meta.text.source.endPos prev
+  handleSemanticTokens 0 (← readDoc).meta.text.source.rawEndPos prev
 
 def handleSemanticTokensRange
 (p : SemanticTokensRangeParams) (prev : RequestTask SemanticTokens)

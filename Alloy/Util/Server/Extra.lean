@@ -10,16 +10,16 @@ open Lean Server JsonRpc RequestM
 
 namespace Alloy
 
-@[inline] def lspRangeToUtf8Range (text : FileMap) (range : Lsp.Range) : String.Range :=
+@[inline] def lspRangeToUtf8Range (text : FileMap) (range : Lsp.Range) : Syntax.Range :=
   ⟨text.lspPosToUtf8Pos range.start, text.lspPosToUtf8Pos range.end⟩
 
-@[inline] def utf8RangeToLspRange (text : FileMap) (range : String.Range) : Lsp.Range :=
+@[inline] def utf8RangeToLspRange (text : FileMap) (range : Syntax.Range) : Lsp.Range :=
   ⟨text.utf8PosToLspPos range.start, text.utf8PosToLspPos range.stop⟩
 
 def Shim.leanPosToLsp? (self : Shim) (leanPos : String.Pos.Raw) (includeStop := false) : Option Lsp.Position := do
   self.text.utf8PosToLspPos (← self.leanPosToShim? leanPos includeStop)
 
-def Shim.utf8RangeToLean? (self : Shim) (shimRange : String.Range) : Option String.Range := do
+def Shim.utf8RangeToLean? (self : Shim) (shimRange : Syntax.Range) : Option Syntax.Range := do
   let leanHead ← self.shimPosToLeanStx? shimRange.start >>= (·.getPos?)
   let leanTail ← self.shimPosToLeanStx? shimRange.stop (includeStop := true) >>= (·.getTailPos?)
   return ⟨leanHead, leanTail⟩
