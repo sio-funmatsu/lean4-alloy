@@ -28,12 +28,13 @@ Convert a visibility modifier syntax into a `Visibility`.
 
 Code is taken from `elabModifiers` in `Lean.Elab.DeclModifiers`.
 -/
-def expandOptVisibility : Option (TSyntax [``Command.private,``Command.protected]) → MacroM Visibility
+def expandOptVisibility : Option (TSyntax [``Command.private,``Command.protected,``Command.public]) → MacroM Visibility
 | none => pure Visibility.regular
 | some v =>
   let kind := v.raw.getKind
   if kind == ``Command.private then pure Visibility.private
   else if kind == ``Command.protected then pure Visibility.protected
+  else if kind == ``Command.public then pure Visibility.regular
   else Macro.throwErrorAt v "unexpected visibility modifier"
 
 /-- A type specifier that is restricted to types of the `Type [<lv>]` form. -/

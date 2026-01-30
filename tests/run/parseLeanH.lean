@@ -33,7 +33,7 @@ partial def test : CommandElabM PUnit := do
   let fileName := "lean.h"
   let includeDir := (← Lean.getBuildDir) / "include" / "lean"
   let input ← IO.FS.readFile <| includeDir / fileName
-  let input := input.replace "--" "-=1"
+  let input := input.replace "--" "-=1" |>.replace "std::" ""
   let p := categoryParser `cCmd 0
   let ictx := mkInputContext input fileName
   let env ← getEnv
