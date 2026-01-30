@@ -6,9 +6,9 @@ open Lean Parser Elab Command
 partial def Lean.Data.Trie.erase {α} (t : Trie α) (s : String) : Trie α :=
   let rec loop : String.Pos.Raw → Trie α → Trie α
     | i, leaf v =>
-      if i < s.endPos then leaf v else leaf none
+      if i < s.rawEndPos then leaf v else leaf none
     | i, node1 v c' t' =>
-      if h : i < s.endPos then
+      if h : i < s.rawEndPos then
         if c' = s.getUTF8Byte i h then
           loop ⟨i.byteIdx+1⟩ t'
         else
@@ -16,7 +16,7 @@ partial def Lean.Data.Trie.erase {α} (t : Trie α) (s : String) : Trie α :=
       else
         node1 none c' t'
     | i, node v cs ts =>
-      if h : i < s.endPos then
+      if h : i < s.rawEndPos then
         let c := s.getUTF8Byte i h
         match cs.findIdx? (· == c) with
         | none => node v cs ts

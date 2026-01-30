@@ -81,11 +81,11 @@ def logDiagnosticsAfter (iniPos : String.Pos.Raw) : CommandElabM Unit := do
 where
   filterMessage (msg : String) :=
     let lns := msg.splitOn "\n" |>.filterMap fun ln => do
-      let ln := ln.trim
+      let ln := ln.trimAscii.toString
       guard <| ¬ ln.startsWith "nul" -- fake file name: `nul` or `null`
       let suff := "(fix available)"
-      return if ln.endsWith suff then ln.dropRight suff.length else ln
-    "\n".intercalate lns |>.trim
+      return if ln.endsWith suff then (ln.dropEnd suff.length).toString else ln
+    "\n".intercalate lns |>.trimAscii.toString
 
 /--
 Elaborate a C command. The steps are as follows:

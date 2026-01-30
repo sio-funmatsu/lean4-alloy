@@ -204,10 +204,10 @@ def intSuffix :=
   | .str .anonymous s =>
     let s := s.toLower
     let s :=
-      if s.front = 'u' then s.drop 1
-      else if s.back = 'u' then s.dropRight 1
+      if s.front = 'u' then (s.drop 1).toString
+      else if s.back = 'u' then (s.dropEnd 1).toString
       else s
-    s = "l" || s = "ll"
+    s == "l" || s == "ll"
   | _ => false
 
 /--

@@ -61,7 +61,7 @@ partial def reprint (stx : Syntax) (startPos : String.Pos.Raw := 0) : Option Shi
 
 /-- Computes the `bsize` of the reprinted `Syntax` in the shim source. -/
 def ShimSyntax.bsize : ShimSyntax → Nat
-| .atom info val => sizeLeaf val.toSubstring info
+| .atom info val => sizeLeaf val.toRawSubstring info
 | .ident info rawVal .. => sizeLeaf rawVal info
 | .node (.synthetic head tail) _ _ => tail.byteIdx - head.byteIdx
 | _ => 0

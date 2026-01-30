@@ -7,7 +7,7 @@ open Lean Elab Command Syntax Parser
 
 elab_rules : command
 | `(cCmd| #define $id $v) => do
-  let some n := v.raw.reprint.bind (·.trim.toNat?)
+  let some n := v.raw.reprint.bind (·.trimAscii.toString.toNat?)
     | throwErrorAt v "expected nat"
   addCommandToShim (← getRef)
   elabCommand <| ← `(def $id := $(quote n))
@@ -37,5 +37,5 @@ end
   IO.print shim.toString
   unless shim.cmds.size == 2 do
     throwError s!"expected 2 command, got {shim.cmds.size}"
-  unless shim.toString.trim.endsWith "four = 4 ;" do
+  unless shim.toString.trimAscii.toString.endsWith "four = 4 ;" do
     throwError s!"shim missing expected end"
